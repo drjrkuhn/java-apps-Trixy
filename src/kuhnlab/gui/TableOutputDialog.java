@@ -13,6 +13,9 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.SystemColor;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -45,8 +48,11 @@ public class TableOutputDialog extends JDialog {
 
     public JPanel buttonPanel;
     public JButton okButton;
+    public JButton copyButton;
+    public JButton copyTransposeButton;
     public JTable table;
     public JScrollPane tableScrollPane;
+    private static final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
     public TableOutputDialog(JFrame parent, String title, boolean isModal, Object[][] data) {
         this(parent, title, isModal);
@@ -89,7 +95,7 @@ public class TableOutputDialog extends JDialog {
         // convert list of lists to array of arrays
         int nRows = data.size();
         Object[][] rows = new Object[nRows][];
-        for (int i=0; i<nRows; i++) {
+        for (int i = 0; i < nRows; i++) {
             rows[i] = data.get(i).toArray();
         }
         setData(rows, null, true);
@@ -100,20 +106,24 @@ public class TableOutputDialog extends JDialog {
         // convert list of lists to array of arrays
         int nRows = data.size();
         Object[][] rows = new Object[nRows][];
-        for (int i=0; i<nRows; i++) {
+        for (int i = 0; i < nRows; i++) {
             rows[i] = data.get(i).toArray();
         }
         setData(rows, header.toArray(), true);
     }
 
-    /** Common constructor. */
+    /**
+     * Common constructor.
+     */
     protected TableOutputDialog(JFrame parent, String title, boolean isModal) {
         super(parent, isModal);
         setTitle(title);
         setLocation(new Point(parent.getWidth(), 0));
     }
 
-    /** Data initialization. Used by constructors. */
+    /**
+     * Data initialization. Used by constructors.
+     */
     protected void setData(Object[][] data, Object[] header, boolean boldFirstRow) {
         if (header == null) {
             int nCols = data[0].length;
@@ -128,7 +138,6 @@ public class TableOutputDialog extends JDialog {
         tableScrollPane = new JScrollPane();
         table = new JTable();
         buttonPanel = new JPanel();
-        okButton = new JButton();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         table.setModel(tableModel);
@@ -140,7 +149,7 @@ public class TableOutputDialog extends JDialog {
         int width = COLWIDTH * maxShowColumns;
         int height = ROWHEIGHT * table.getRowCount();
         Dimension dim = new Dimension(width, height);
-        for (int i=0; i<tableModel.getColumnCount(); i++) {
+        for (int i = 0; i < tableModel.getColumnCount(); i++) {
             table.getColumnModel().getColumn(i).setPreferredWidth(COLWIDTH);
         }
         //tableScrollPane.setPreferredSize(dim);
@@ -149,7 +158,6 @@ public class TableOutputDialog extends JDialog {
         //table.setSize(dim);
         if (boldFirstRow) {
             table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
-
                 Color normBack, selBack, normFore, selFore;
 
                 @Override
@@ -180,16 +188,62 @@ public class TableOutputDialog extends JDialog {
 
         getContentPane().add(tableScrollPane, java.awt.BorderLayout.CENTER);
 
-        okButton.setText("OK");
-        okButton.addActionListener(new java.awt.event.ActionListener() {
+        copyButton = new JButton("Copy data");
+        copyButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                TableModel data = table.getModel();
+                StringBuffer tabData = new StringBuffer();
+                int nCols = data.getColumnCount();
+                int nRows = data.getRowCount();
+                for (int r = 0; r < nRows; r++) {
+                    for (int c = 0; c < nCols; c++) {
+                        tabData.append(data.getValueAt(r, c).toString());
+                        if (c < nCols - 1) {
+                            tabData.append('\t');
+                        }
+                    }
+                    tabData.append('\n');
+                    StringSelection contents = new StringSelection(tabData.toString());
+                    clipboard.setContents(contents, contents);
+                }
+            }
+        });
+        buttonPanel.add(copyButton);
 
+        copyTransposeButton = new JButton("Copy transpose");
+        copyTransposeButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                TableModel data = table.getModel();
+                StringBuffer tabData = new StringBuffer();
+                int nCols = data.getColumnCount();
+                int nRows = data.getRowCount();
+                for (int c = 0; c < nCols; c++) {
+                    for (int r = 0; r < nRows; r++) {
+                        tabData.append(data.getValueAt(r, c).toString());
+                        if (r < nRows - 1) {
+                            tabData.append('\t');
+                        }
+                    }
+                    tabData.append('\n');
+                    StringSelection contents = new StringSelection(tabData.toString());
+                    clipboard.setContents(contents, contents);
+                }
+            }
+        });
+        buttonPanel.add(copyTransposeButton);
+
+        okButton = new JButton("OK");
+        okButton.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 dispose();
             }
         });
-
         buttonPanel.add(okButton);
+
+
         getContentPane().add(buttonPanel, java.awt.BorderLayout.SOUTH);
         getRootPane().setDefaultButton(okButton);
         pack();
@@ -201,7 +255,6 @@ public class TableOutputDialog extends JDialog {
     @Override
     protected JRootPane createRootPane() {
         ActionListener actionListener = new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 dispose();
