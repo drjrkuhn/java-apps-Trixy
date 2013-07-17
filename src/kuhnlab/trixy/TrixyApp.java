@@ -380,7 +380,7 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
         currentPath = new File(file.getParent());
         SeriesList newdata = readSeriesFile(file, filter);
         if (newdata == null) {
-            JOptionPane.showMessageDialog(view.getFrame(), "Unable to open file\n" + file.getName(), appName, JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(view.getFrame(), "Unable to open file " + file.getName(), appName, JOptionPane.ERROR_MESSAGE);
             return;
         }
 
