@@ -70,4 +70,9 @@
           <defaultexcludes add="**/.svn"/>
           <defaultexcludes add="**/.svn/**"/>
         </target>
+        
+        <target name="-post-jar">
+            <copy file="src/kuhnlab/trixy/resources/icons/TrixyIcon.png" todir="dist"/>
+        </target>
+
 </project>
