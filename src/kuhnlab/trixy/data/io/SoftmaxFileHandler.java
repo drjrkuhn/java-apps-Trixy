@@ -215,6 +215,8 @@ public class SoftmaxFileHandler extends AbstractSeriesFileHandler {
             return goodData;
         } catch (IOException ex) {
             ex.printStackTrace();
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
         return null;
     }
