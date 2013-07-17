@@ -66,13 +66,28 @@
     nbproject/build-impl.xml file. 
 
     -->
-        <target name="-pre-init">
-          <defaultexcludes add="**/.svn"/>
-          <defaultexcludes add="**/.svn/**"/>
-        </target>
+    <target name="-pre-init">
+        <defaultexcludes add="**/.svn"/>
+        <defaultexcludes add="**/.svn/**"/>
+    </target>
         
-        <target name="-post-jar">
-            <copy file="src/kuhnlab/trixy/resources/icons/TrixyIcon.png" todir="dist"/>
-        </target>
+    <target name="-post-init">
+        <loadproperties srcFile="src/kuhnlab/trixy/resources/TrixyApp.properties">
+            <filterchain>
+                <linecontains>
+                    <contains value="Application."/>
+                </linecontains>
+            </filterchain>
+        </loadproperties>
+        <property name="app-ver" value="${Application.title}-${Application.version}"/>
+    </target>
+    <target name="-post-jar">
+        <copy file="src/kuhnlab/trixy/resources/icons/TrixyIcon.png" todir="${dist.dir}"/>
+        <copy todir="${app-ver}">
+            <fileset dir="${dist.dir}"/>
+        </copy>
+        <zip destfile="${dist.dir}/${app-ver}.zip" basedir="${app-ver}"/>
+        <delete dir="${app-ver}"/>
+    </target>
 
 </project>
