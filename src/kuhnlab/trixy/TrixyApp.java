@@ -68,9 +68,12 @@ import org.jdesktop.application.ApplicationAction;
 import org.jdesktop.application.ApplicationActionMap;
 import org.jdesktop.application.FrameView;
 import org.jdesktop.application.SingleFrameApplication;
+import org.jdesktop.application.utils.AppHelper;
+import org.jdesktop.application.utils.PlatformType;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.StandardChartTheme;
 import org.jfree.chart.annotations.XYLineAnnotation;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.block.BlockBorder;
@@ -115,14 +118,12 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
     protected boolean legendVisible = false;
     protected boolean pasteAvailable = false;
     protected boolean undoAvailable = false;
-    
     protected SeriesFileHandler[] seriesReaders = {
         new CommaFileHandler(), new TabbedFileHandler(), new SoftmaxFileHandler(),
         new PtiFileHandler(), new SerializedFileHandler()
     };
-    
     protected SeriesFileHandler[] seriesWriters = {
-        new CommaFileHandler(), new TabbedFileHandler(), 
+        new CommaFileHandler(), new TabbedFileHandler(),
         new PtiFileHandler(), new KinsimFileHandler(), new SerializedFileHandler()
     };
 
@@ -186,7 +187,14 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
         mainChartRenderer = null;
         mainChartPanel = null;
         modified = false;
-        
+
+        final PlatformType platform = AppHelper.getPlatform();
+        if (PlatformType.OS_X.equals(platform)) {
+            System.setProperty("apple.laf.useScreenMenuBar", "true");
+            System.setProperty("apple.awt.brushMetalLook", "true");
+            //System.setProperty("apple.awt.fileDialogForDirectories", "true");
+        }
+
         appName = getResourceString("Application.title");
         currentPath = new File(System.getProperty("user.dir"));
         view = new FrameView(this);
@@ -199,12 +207,13 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
             public void willExit(EventObject event) {
             }
         });
-        
+
         show(view);
     }
 
     /**
      * A convenient static getter for the application instance.
+     *
      * @return the instance of TrixyApp
      */
     public static TrixyApp getApplication() {
@@ -217,6 +226,7 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
 
     /**
      * Create a menu from a list of strings. Allows for sub-sub menus.
+     *
      * @param items
      * @return
      */
@@ -318,7 +328,6 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
     //=======================================================================
     // Helper Methods
     //=======================================================================
-    
     public SeriesList readSeriesFile(File file, FileFilter filter) {
         SeriesFileHandler mainHandler = null;
         List<SeriesFileHandler> possibleHandlers = new ArrayList<SeriesFileHandler>();
@@ -332,7 +341,7 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
                 possibleHandlers.add(handler);
             }
         }
-        
+
         if (mainHandler == null) {
             if (possibleHandlers.size() == 1) {
                 // only one possible handler
@@ -348,7 +357,7 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
                 }
             }
         }
-        
+
         if (mainHandler == null) {
             // could not find any handlers
             return null;
@@ -366,19 +375,20 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
 
         return mainHandler.readFile(file);
     }
-    
+
     public void openData(File file, FileFilter filter) {
         SeriesList newdata = readSeriesFile(file, filter);
         if (newdata == null) {
-             JOptionPane.showMessageDialog(view.getFrame(), "Unable to open file\n"+file.getName(), appName, JOptionPane.ERROR_MESSAGE);
-             return;
+            JOptionPane.showMessageDialog(view.getFrame(), "Unable to open file\n" + file.getName(), appName, JOptionPane.ERROR_MESSAGE);
+            return;
         }
-        
+
         closeData();
         currentFile = file;
         currentFileType = filter;
         currentPath = new File(file.getParent());
         data = newdata;
+        ChartFactory.setChartTheme(StandardChartTheme.createLegacyTheme());
         mainChart = ChartFactory.createXYLineChart(null, "X", "Y", data, PlotOrientation.VERTICAL, false, true, false);
         mainChartRenderer = mainChart.getXYPlot().getRenderer();
 
@@ -398,7 +408,7 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
         modified = false;
         updateTitle();
         setFileOpen(true);
-        
+
         setZoomMode(false);
         updateZoomMode();
         setLegendVisible(false);
@@ -455,18 +465,18 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
                 possibleHandlers.add(handler);
             }
         }
-        
+
         if (mainHandler == null && possibleHandlers.size() > 0) {
             // could not find a single handler. Just use the first file
             // type that matches this file extension
             mainHandler = possibleHandlers.get(0);
         }
-        
+
         if (mainHandler == null) {
             // could not find any handlers
             return false;
         }
-        
+
         GenericOptionsPanel op = mainHandler.getOptionsPanel(true);
         if (op != null) {
             GenericOptionsDialog gd = new GenericOptionsDialog(view.getFrame(), "Save file options");
@@ -477,7 +487,7 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
         }
         return mainHandler.writeFile(data, file);
     }
-    
+
     public boolean saveData(File newfile, FileFilter filter) {
         boolean ret = writeSeriesFile(data, newfile, filter);
         if (!ret) {
@@ -545,7 +555,7 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
         // Attempt to obtain colors of each of the plot lines
         AbstractRenderer renderer;
         if (mainChartRenderer instanceof AbstractRenderer) {
-            renderer = (AbstractRenderer)mainChartRenderer;
+            renderer = (AbstractRenderer) mainChartRenderer;
         } else {
             return;
         }
@@ -814,7 +824,7 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
             fc.addChoosableFileFilter(handler.getFilter());
         }
         fc.setFileFilter(currentFileType != null ? currentFileType : fc.getAcceptAllFileFilter());
-            
+
         //fc.setFileHidingEnabled(false);
         fc.setFileHidingEnabled(true);
         if (fc.showOpenDialog(view.getFrame()) != JFileChooser.APPROVE_OPTION) {
@@ -978,7 +988,7 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
         if (data == null) {
             return;
         }
-        
+
         JFileChooser fc = new JFileChooser(currentPath);
         for (SeriesFileHandler handler : seriesReaders) {
             fc.addChoosableFileFilter(handler.getFilter());
@@ -988,7 +998,7 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
         if (fc.showOpenDialog(view.getFrame()) != JFileChooser.APPROVE_OPTION) {
             return;
         }
-        
+
         File newfile = fc.getSelectedFile();
         SeriesList newdata = readSeriesFile(newfile, fc.getFileFilter());
 
@@ -1183,10 +1193,9 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
     public void selectAllSeries() {
         dataListComponent.setSelectionInterval(0, data.getSeriesCount() - 1);
     }
-    
+
     @Action
     public void preferences() {
-        
     }
 
     //=======================================================================
@@ -1343,13 +1352,13 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
             allData.addAll(ser.subSeries(range[0], range[1]).getPoints());
         }
         selection.addSeries(allData);
-        
-        List<Object> header = new ArrayList<Object>(nSelected+2);
-        List<StatTools.Stats> selectedStats = new ArrayList<StatTools.Stats>(nSelected+1);
+
+        List<Object> header = new ArrayList<Object>(nSelected + 2);
+        List<StatTools.Stats> selectedStats = new ArrayList<StatTools.Stats>(nSelected + 1);
         header.add("Statistics");
-        Map<String, List<Object>> dataRows = new HashMap<String, List<Object>> ();
+        Map<String, List<Object>> dataRows = new HashMap<String, List<Object>>();
         for (String desc : StatTools.Stats.DESCS) {
-            List<Object> row = new ArrayList<Object>(nSelected+1);
+            List<Object> row = new ArrayList<Object>(nSelected + 1);
             row.add(desc);
             dataRows.put(desc, row);
         }
@@ -1402,11 +1411,11 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
         XYPlot plot = null;
         if (mainChart != null) {
             BasicStroke thinStroke = new BasicStroke(0.5f);
-            BasicStroke dashStroke = new BasicStroke(1.5f, BasicStroke.CAP_SQUARE, 
+            BasicStroke dashStroke = new BasicStroke(1.5f, BasicStroke.CAP_SQUARE,
                     BasicStroke.JOIN_MITER, 10.0f, new float[]{20f, 10f}, 0.0f);
             plot = mainChart.getXYPlot();
             ValueAxis xaxis = plot.getDomainAxis();
-            for (int i=0; i<nSelected+1; i++) {
+            for (int i = 0; i < nSelected + 1; i++) {
                 StatTools.Stats stats = selectedStats.get(i);
                 if (stats != null) {
                     java.awt.Stroke stroke;
@@ -1447,7 +1456,7 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
             JOptionPane.showMessageDialog(view.getFrame(), "Please select at least one series", appName, JOptionPane.ERROR_MESSAGE);
             return;
         }
-        
+
         // ADD a series containing ALL of the selected points
         Series allData = new Series("ALL");
         for (Series ser : selection.getSeries()) {
@@ -1458,13 +1467,13 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
             allData.addAll(ser.subSeries(range[0], range[1]).getPoints());
         }
         selection.addSeries(allData);
-        
-        List<Object> header = new ArrayList<Object>(nSelected+2);
-        List<StatTools.LinFit> selectedFits = new ArrayList<StatTools.LinFit>(nSelected+1);
+
+        List<Object> header = new ArrayList<Object>(nSelected + 2);
+        List<StatTools.LinFit> selectedFits = new ArrayList<StatTools.LinFit>(nSelected + 1);
         header.add("Linear Fit");
-        Map<String, List<Object>> dataRows = new HashMap<String, List<Object>> ();
+        Map<String, List<Object>> dataRows = new HashMap<String, List<Object>>();
         for (String desc : StatTools.LinFit.DESCS) {
-            List<Object> row = new ArrayList<Object>(nSelected+2);
+            List<Object> row = new ArrayList<Object>(nSelected + 2);
             row.add(desc);
             dataRows.put(desc, row);
         }
@@ -1522,11 +1531,11 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
         XYPlot plot = null;
         if (mainChart != null) {
             BasicStroke thinStroke = new BasicStroke(0.5f);
-            BasicStroke dashStroke = new BasicStroke(1.5f, BasicStroke.CAP_SQUARE, 
+            BasicStroke dashStroke = new BasicStroke(1.5f, BasicStroke.CAP_SQUARE,
                     BasicStroke.JOIN_MITER, 10.0f, new float[]{20f, 10f}, 0.0f);
             plot = mainChart.getXYPlot();
             ValueAxis xaxis = plot.getDomainAxis();
-            for (int i=0; i<nSelected+1; i++) {
+            for (int i = 0; i < nSelected + 1; i++) {
                 StatTools.LinFit fit = selectedFits.get(i);
                 if (fit != null) {
                     java.awt.Stroke stroke;
@@ -1546,7 +1555,7 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
                             xmin, xmin * fit.slope + fit.inter,
                             xmax, xmax * fit.slope + fit.inter,
                             stroke, color);
-                    
+
                     plot.addAnnotation(line);
                     annotations.add(line);
                 }
@@ -1559,7 +1568,6 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
             }
         }
     }
-
     //=======================================================================
     // TRANSFORM MENU Action Handlers
     //=======================================================================
@@ -1867,10 +1875,9 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
             endModify();
         }
     }
-    
     double scaleXFactor = 2;
-    
     double logYBase = 10;
+
     @Action(enabledProperty = "fileOpen")
     public void logY() {
         if (data == null) {
@@ -1906,8 +1913,8 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
             endModify();
         }
     }
-
     double antilogYBase = 10;
+
     @Action(enabledProperty = "fileOpen")
     public void antilogY() {
         if (data == null) {
@@ -1943,9 +1950,8 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
             endModify();
         }
     }
-
-
     double powYFactor = 10;
+
     @Action(enabledProperty = "fileOpen")
     public void powY() {
         if (data == null) {
@@ -2013,7 +2019,6 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
             endModify();
         }
     }
-
 
     @Action(enabledProperty = "fileOpen")
     public void scaleX() {
