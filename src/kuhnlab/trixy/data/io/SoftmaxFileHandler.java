@@ -65,10 +65,13 @@ public class SoftmaxFileHandler extends AbstractSeriesFileHandler {
             while (line != null) {
                 if (line.startsWith(START_NOTE)) {
                     skipToEndOfSection(br, END_ALL);
+                    line = END_ALL;
+                    continue;
                 } else if (line.startsWith(START_PLATE)) {
                     split = line.split(separator);
                     if (split.length < 4 || !split[3].startsWith(TIMEFORMAT)) {
                         skipToEndOfSection(br, END_ALL);
+                        line = END_ALL;
                         continue;
                     }
                     curPlateName = split[1].trim();
@@ -78,6 +81,7 @@ public class SoftmaxFileHandler extends AbstractSeriesFileHandler {
 
                     if (split.length < 2 || !(split[0].startsWith(TIME_HEADING) || split[0].startsWith(WAVELENGTH_HEADING))) {
                         skipToEndOfSection(br, END_ALL);
+                        line = END_ALL;
                         continue;
                     }
                     if (curData != null) {
@@ -144,6 +148,7 @@ public class SoftmaxFileHandler extends AbstractSeriesFileHandler {
                 } else if (line.startsWith(START_GROUP)) {
                     if (curData == null) {
                         skipToEndOfSection(br, END_ALL);
+                        line = END_ALL;
                         continue;
                     }
                     line = br.readLine();
@@ -164,6 +169,7 @@ public class SoftmaxFileHandler extends AbstractSeriesFileHandler {
                     }
                     if (colSample < 0 || colWells < 0) {
                         skipToEndOfSection(br, END_ALL);
+                        line = END_ALL;
                         continue;
                     }
                     // convert Well names (such as B3 or H12) to Sample names.
