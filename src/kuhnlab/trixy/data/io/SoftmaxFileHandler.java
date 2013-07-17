@@ -88,7 +88,7 @@ public class SoftmaxFileHandler extends AbstractSeriesFileHandler {
                         allData.addAllSeries(curData.getSeries());
                     }
                     curData = new SeriesList();
-                    int nCurves = split.length - 1;
+                    int nCurves = split.length;
                     for (int i = 1; i < nCurves; i++) {
                         String name = split[i];
                         Series newser = new Series(name);
