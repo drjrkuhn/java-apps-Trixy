@@ -196,7 +196,7 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
         }
 
         appName = getResourceString("Application.title");
-        currentPath = new File(System.getProperty("user.dir"));
+        currentPath = new File(System.getProperty("user.home"));
         view = new FrameView(this);
         initView(view);
         this.addExitListener(new Application.ExitListener() {
@@ -377,6 +377,7 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
     }
 
     public void openData(File file, FileFilter filter) {
+        currentPath = new File(file.getParent());
         SeriesList newdata = readSeriesFile(file, filter);
         if (newdata == null) {
             JOptionPane.showMessageDialog(view.getFrame(), "Unable to open file\n" + file.getName(), appName, JOptionPane.ERROR_MESSAGE);
@@ -386,7 +387,6 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
         closeData();
         currentFile = file;
         currentFileType = filter;
-        currentPath = new File(file.getParent());
         data = newdata;
         ChartFactory.setChartTheme(StandardChartTheme.createLegacyTheme());
         mainChart = ChartFactory.createXYLineChart(null, "X", "Y", data, PlotOrientation.VERTICAL, false, true, false);
