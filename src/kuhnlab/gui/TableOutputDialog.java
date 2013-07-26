@@ -48,8 +48,10 @@ public class TableOutputDialog extends JDialog {
 
     public JPanel buttonPanel;
     public JButton okButton;
-    public JButton copyButton;
-    public JButton copyTransposeButton;
+    public JButton copyAllButton;
+    public JButton copyAllTransposeButton;
+    public JButton copySelectedButton;
+    public JButton copySelectedTransposeButton;
     public JTable table;
     public JScrollPane tableScrollPane;
     private static final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
@@ -143,6 +145,8 @@ public class TableOutputDialog extends JDialog {
         table.setModel(tableModel);
         table.setColumnSelectionAllowed(true);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        table.setRowSelectionAllowed(true);
+        table.setColumnSelectionAllowed(false);
         final int COLWIDTH = 100;
         int ROWHEIGHT = table.getRowHeight();
         int maxShowColumns = Math.max(3, tableModel.getColumnCount());
@@ -188,8 +192,8 @@ public class TableOutputDialog extends JDialog {
 
         getContentPane().add(tableScrollPane, java.awt.BorderLayout.CENTER);
 
-        copyButton = new JButton("Copy data");
-        copyButton.addActionListener(new java.awt.event.ActionListener() {
+        copyAllButton = new JButton("Copy All");
+        copyAllButton.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 TableModel data = table.getModel();
@@ -209,10 +213,10 @@ public class TableOutputDialog extends JDialog {
                 }
             }
         });
-        buttonPanel.add(copyButton);
+        buttonPanel.add(copyAllButton);
 
-        copyTransposeButton = new JButton("Copy transpose");
-        copyTransposeButton.addActionListener(new java.awt.event.ActionListener() {
+        copyAllTransposeButton = new JButton("Copy All Pivot");
+        copyAllTransposeButton.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 TableModel data = table.getModel();
@@ -232,8 +236,76 @@ public class TableOutputDialog extends JDialog {
                 }
             }
         });
-        buttonPanel.add(copyTransposeButton);
+        buttonPanel.add(copyAllTransposeButton);
 
+        copySelectedButton = new JButton("Copy Selected");
+        copySelectedButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                TableModel data = table.getModel();
+                StringBuffer tabData = new StringBuffer();
+                int nCols = data.getColumnCount();
+                int nRows = data.getRowCount();
+                int[] sel = table.getSelectedRows();
+                if (sel.length < 1)
+                    return;
+                int[] copyRows = sel;
+                if (sel[0] != 0) {
+                    // add the header row if not selected
+                    copyRows = Arrays.copyOf(sel, sel.length + 1);
+                    copyRows[sel.length] = 0;
+                }
+                Arrays.sort(copyRows);
+                for (int i = 0; i < copyRows.length; i++) {
+                    int r = copyRows[i];
+                    for (int c = 0; c < nCols; c++) {
+                        tabData.append(data.getValueAt(r, c).toString());
+                        if (c < nCols - 1) {
+                            tabData.append('\t');
+                        }
+                    }
+                    tabData.append('\n');
+                    StringSelection contents = new StringSelection(tabData.toString());
+                    clipboard.setContents(contents, contents);
+                }
+            }
+        });
+        buttonPanel.add(copySelectedButton);
+
+        copySelectedTransposeButton = new JButton("Copy Selected Pivot");
+        copySelectedTransposeButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                TableModel data = table.getModel();
+                StringBuffer tabData = new StringBuffer();
+                int nCols = data.getColumnCount();
+                int nRows = data.getRowCount();
+                int[] sel = table.getSelectedRows();
+                if (sel.length < 1)
+                    return;
+                int[] copyRows = sel;
+                if (sel[0] != 0) {
+                    // add the header row if not selected
+                    copyRows = Arrays.copyOf(sel, sel.length + 1);
+                    copyRows[sel.length] = 0;
+                }
+                Arrays.sort(copyRows);
+                for (int c = 0; c < nCols; c++) {
+                    for (int i = 0; i < copyRows.length; i++) {
+                        int r = copyRows[i];
+                        tabData.append(data.getValueAt(r, c).toString());
+                        if (r < nRows - 1) {
+                            tabData.append('\t');
+                        }
+                    }
+                    tabData.append('\n');
+                    StringSelection contents = new StringSelection(tabData.toString());
+                    clipboard.setContents(contents, contents);
+                }
+            }
+        });
+        buttonPanel.add(copySelectedTransposeButton);
+        
         okButton = new JButton("OK");
         okButton.addActionListener(new java.awt.event.ActionListener() {
             @Override
