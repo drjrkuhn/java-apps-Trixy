@@ -520,7 +520,7 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
 
     public int getLastSelectedIndex() {
         int[] indices = dataListComponent.getSelectedIndices();
-        if (indices != null) {
+        if (indices != null && indices.length > 0) {
             return indices[indices.length - 1];
         } else {
             return -1;
@@ -1192,6 +1192,40 @@ public class TrixyApp extends SingleFrameApplication implements ClipboardOwner,
     @Action(enabledProperty = "fileOpen")
     public void selectAllSeries() {
         dataListComponent.setSelectionInterval(0, data.getSeriesCount() - 1);
+    }
+
+    @Action(enabledProperty = "fileOpen")
+    public void sortSeries() {
+        if (data == null) {
+            return;
+        }
+        SeriesList selection = getSelectedSeries();
+        if (selection.getSeriesCount() == 0) {
+            return;
+        }
+        startModify();
+        data.removeSeries(selection.getSeries());
+        selection.sortByName();
+        data.addAllSeries(selection.getSeries());
+        dataListComponent.clearSelection();
+        endModify();
+    }
+
+    @Action(enabledProperty = "fileOpen")
+    public void sortSeriesValue() {
+        if (data == null) {
+            return;
+        }
+        SeriesList selection = getSelectedSeries();
+        if (selection.getSeriesCount() == 0) {
+            return;
+        }
+        startModify();
+        data.removeSeries(selection.getSeries());
+        selection.sortByNamesValue();
+        data.addAllSeries(selection.getSeries());
+        dataListComponent.clearSelection();
+        endModify();
     }
 
     @Action
